@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Oxgame">
+
+	<typeAlias alias="egovMap"
+		type="egovframework.rte.psl.dataaccess.util.EgovMap" />
+	<typeAlias alias="emp"
+		type="egovframework.example.sample.service.EmpVO" />
+	<typeAlias alias="mc"
+		type="egovframework.example.sample.service.MCVO" />
+		
+	
+	<resultMap id="empVO"
+		class="egovframework.example.sample.service.EmpVO">
+		<result property="empName" column="EMPNAME" />
+		<result property="empAnswer" column="EMPANSWER" />
+		<result property="empPass" column="EMPPASS" />
+		<result property="empAnswerTime" column="EMPANSWERTIME" />
+	</resultMap>
+
+	<resultMap id="mcVO"
+		class="egovframework.example.sample.service.MCVO">
+		<result property="mcName" column="MCNAME" />
+		<result property="mcAnswer" column="MCANSWER" />
+		<result property="mcQStart" column="MCQSTART" />
+	</resultMap>
+
+	<!-- EGEMP 테이블 사원명, 세션 인서트 -->
+	<insert id="oxDAO.insertEmp" parameterClass="emp">
+		<![CDATA[
+			INSERT INTO EGEMP 
+				( EMPNAME
+				,EMPPASS 
+				 )
+			VALUES ( #empName#
+				  , 'Y'
+				 )
+		]]>
+	</insert>
+
+	<!-- EGEMP 테이블 정답 업데이트 -->
+	<update id="oxDAO.updateEmpAnswer">
+		UPDATE EGEMP
+		SET EMPANSWER=#empAnswer#
+			, EMPANSWERTIME=#empAnswerTime#
+		WHERE EMPPASS = 'Y'
+		<isNotEmpty property="empName">
+			AND EMPNAME = #empName#
+		</isNotEmpty>
+	</update>
+
+	<!-- EGMC 테이블 문제시작여부 업데이트 -->
+	<update id="oxDAO.updateMcQStart">
+		<![CDATA[
+			UPDATE EGMC
+			SET MCQSTART=#mcQStart#
+			WHERE 1=1
+		]]>
+	</update>
+
+	<!-- EGMC 테이블 정답 업데이트 -->
+	<update id="oxDAO.updateMcAnswer">
+		<![CDATA[
+			UPDATE EGMC
+			SET MCANSWER=#mcAnswer#
+			WHERE 1=1
+		]]>
+	</update>
+
+	<!-- EGEMP 테이블 통과여부 업데이트 -->
+	<update id="oxDAO.updateEmpPass" parameterClass="String">
+		<![CDATA[
+			UPDATE EGEMP
+			SET EMPPASS='N'
+			WHERE 1=1
+			AND EMPANSWER != #mcAnswer#
+		]]>
+	</update>
+
+	<!-- [추가]버튼 으로 Emp 업데이트 -->
+	<update id="oxDAO.updateAddEmpPass">
+		<![CDATA[
+			UPDATE EGEMP
+			SET EMPPASS='Y'
+				,EMPANSWERTIME=#empAnswerTime#
+				,EMPANSWER=#empAnswer#
+			WHERE 1=1
+			AND EMPPASS='N'
+			AND EMPNAME=#empName#
+		]]>
+	</update>
+
+	<!-- EGEMP 테이블 셀렉트 -->
+	<select id="oxDAO.selectEmpAnswerList" remapResults="true"
+		resultClass="egovMap">
+		<![CDATA[
+            SELECT
+                EMPNAME
+            FROM EGEMP 
+            WHERE 1=1 
+            AND EMPANSWER=#empAnswer#
+            AND EMPPASS=#empPass#
+            ORDER BY EMPANSWERTIME DESC
+        ]]>
+	</select>
+	
+	<!-- EGMC 문제 시작 여부 셀렉트 -->
+	<select id="oxDAO.selectMcQStart" remapResults="true" 
+		resultClass="egovframework.example.sample.service.MCVO">
+		<![CDATA[
+			SELECT 
+				MCQSTART
+			FROM EGMC
+			WHERE 1=1
+			AND MCNAME=#mcName#
+		]]>
+	</select>
+	
+	<!-- EGEMP 이미 있는 사원인지 여부 셀렉트 -->
+	<select id="oxDAO.selectEmp" remapResults="true"
+		resultClass="int">
+			SELECT COUNT(EMPNAME)
+			FROM EGEMP
+			WHERE EMPNAME = #empName#
+	</select>
+	
+	<!-- EGEMP 모든 사원 재시작 업데이트 -->
+	<update id="oxDAO.updateResetEmpPass">
+		<![CDATA[
+			UPDATE EGEMP
+			SET EMPPASS='Y'
+				, EMPANSWER = ''
+				, EMPANSWERTIME = ''
+			WHERE 1=1
+		]]>
+	</update>
+
+</sqlMap>
